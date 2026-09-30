@@ -12,11 +12,14 @@ The script starts a separate process with temporary HOME/HERMES_HOME/HERMES_RUNT
 
 ## Run on the PR checkout
 
-From its repository root, with the dependency interpreter activated:
+This kit lives only on a fork verification branch, not in the upstream PR diff. Download the script using the commit-pinned raw URL in the PR body into a scratch directory outside the PR checkout. With the dependency interpreter activated, from the disposable PR repository root:
 
 ```sh
-python scripts/repro_skill_guard_delta.py --expect fixed
+REPRO=/absolute/path/to/downloaded/repro_skill_guard_delta.py
+python "$REPRO" --repo "$PWD" --expect fixed
 ```
+
+Always pass `--repo` when using the externally downloaded script; its default repo discovery assumes the original scripts/ layout.
 
 Alternatively replace `python` with the dependency interpreter's absolute path. It emits JSON plus:
 
@@ -28,10 +31,9 @@ Exit 0 means all expected relations passed; 1 means a behavior mismatch. Setup/i
 
 ## Reproduce on the independently verified upstream baseline
 
-Keep the **same probe from the PR** and point it at the baseline source. Example POSIX commands from the disposable PR checkout (the interpreter must already be selected):
+Keep the **same external probe linked in the PR body** and point it at the baseline source. Example POSIX commands from the disposable PR checkout (the interpreter and REPRO must already be selected):
 
 ```sh
-REPRO="$PWD/scripts/repro_skill_guard_delta.py"
 git fetch https://github.com/NousResearch/hermes-agent.git 6ec05205a943cf813bd56c3c79d64bcf922dac67
 git worktree add --detach ../skill-guard-baseline-116091 6ec05205a943cf813bd56c3c79d64bcf922dac67
 python "$REPRO" --repo ../skill-guard-baseline-116091 --expect baseline
@@ -43,7 +45,7 @@ Negative controls (verify the checker is discriminating):
 
 ```sh
 python "$REPRO" --repo ../skill-guard-baseline-116091 --expect fixed
-python "$REPRO" --expect baseline
+python "$REPRO" --repo "$PWD" --expect baseline
 ```
 
 Both must report FAIL and exit 1. Execute individually if your shell stops on the first nonzero status. Baseline worktree cleanup is optional and should follow the operator's normal disposable-checkout policy; this probe does not delete repository worktrees.
